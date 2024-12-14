@@ -38,7 +38,7 @@ import gaurav.cuvettecalltracker.presentation.util.TimestampHelper.Companion.get
 fun LogDetailCard(
     callLog: CallLog,
     modifier: Modifier = Modifier,
-    onListenClick: (String) -> Unit
+    onListenClick: (Int) -> Unit
 ) {
     val callTypeIconResource = getCallTypeIconResource(callLog.callType)
     val callTypeIconTint = getCallTypeIconTint(callLog.callType)

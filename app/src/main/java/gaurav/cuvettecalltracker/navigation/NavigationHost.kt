@@ -10,7 +10,7 @@ import gaurav.cuvettecalltracker.presentation.log_detail.LogDetailScreen
 
 @Composable
 fun NavigationHost(navController: NavHostController = rememberNavController()) {
-    NavHost(navController, Screen.LogDetail("")) {
+    NavHost(navController, Screen.Home) {
         composable<Screen.Home> {
             HomeScreen()
         }

@@ -36,7 +36,7 @@ import gaurav.cuvettecalltracker.presentation.util.TimestampHelper.Companion.get
 fun CallLogCard(
     callLog: CallLog,
     modifier: Modifier = Modifier,
-    onClick: (String) -> Unit
+    onClick: (Int) -> Unit
 ) {
     val callTypeIconResource = getCallTypeIconResource(callLog.callType)
     val callTypeIconTint = getCallTypeIconTint(callLog.callType)
@@ -61,13 +61,13 @@ fun CallLogCard(
             Modifier.weight(1f)
         ) {
             Text(
-                text = "+919460110818",
+                text = callLog.number,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.sp
             )
             Text(
-                text = getCallTypeLabel(callLog.callType)+ ", " +
+                text = getCallTypeLabel(callLog.callType)+ " call, " +
                         getSimpleDurationFormat(callLog.duration),
                 fontSize = 14.sp,
                 lineHeight = 20.sp,

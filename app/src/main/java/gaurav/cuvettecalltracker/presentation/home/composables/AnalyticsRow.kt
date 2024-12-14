@@ -9,15 +9,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import gaurav.cuvettecalltracker.R
 import gaurav.cuvettecalltracker.presentation.composables.AnalyticsCard
-import gaurav.cuvettecalltracker.presentation.home.AllLogsCardButton
 import gaurav.cuvettecalltracker.presentation.util.CallLogResourceHelper.Companion.getCallTypeIconResource
 import gaurav.cuvettecalltracker.presentation.util.CallLogResourceHelper.Companion.getCallTypeIconTint
 import gaurav.cuvettecalltracker.presentation.util.CallType
+import gaurav.cuvettecalltracker.presentation.util.TimestampHelper
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AnalyticsRow(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    totalCalls: Int = 0,
+    totalIncomingCalls: Int = 0,
+    totalOutgoingCalls: Int = 0,
+    totalMissedCalls: Int = 0,
+    totalDuration: Int = 0,
 ) {
     FlowRow(
         modifier = modifier,
@@ -27,31 +32,31 @@ fun AnalyticsRow(
     ) {
         AnalyticsCard(
             title = "Total Calls",
-            value = "233",
+            value = "$totalCalls",
             iconResourceId = R.drawable.layers_24,
             iconTint = Color(0xFF313630)
         )
         AnalyticsCard(
             title = "Total duration",
-            value = "334 Hours",
+            value = TimestampHelper.getSimpleDurationFormat(totalDuration),
             iconResourceId = R.drawable.clock_three_24,
             iconTint = Color(0xFF313630)
         )
         AnalyticsCard(
             title = "Incoming",
-            value = "150",
+            value = "$totalIncomingCalls",
             iconResourceId = getCallTypeIconResource(CallType.INCOMING),
             iconTint = getCallTypeIconTint(CallType.INCOMING)
         )
         AnalyticsCard(
             title = "Outgoing",
-            value = "83",
+            value = "$totalOutgoingCalls",
             iconResourceId = getCallTypeIconResource(CallType.OUTGOING),
             iconTint = getCallTypeIconTint(CallType.OUTGOING)
         )
         AnalyticsCard(
             title = "Missed",
-            value = "83",
+            value = "$totalMissedCalls",
             iconResourceId = getCallTypeIconResource(CallType.MISSED),
             iconTint = getCallTypeIconTint(CallType.MISSED)
         )

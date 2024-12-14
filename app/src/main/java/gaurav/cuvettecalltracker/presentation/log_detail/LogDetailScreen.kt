@@ -47,12 +47,10 @@ fun LogDetailScreen(
             items(10) {
                 LogDetailCard (
                     CallLog(
-                        id = "",
-                        contactId = "",
+                        number = "",
                         timestamp = 1734024741,
                         callType = CallType.OUTGOING,
                         duration = 3534,
-                        sim = 1
                     ),
                     onListenClick = {}
                 )
