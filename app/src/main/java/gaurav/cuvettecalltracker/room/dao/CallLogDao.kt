@@ -24,7 +24,7 @@ interface CallLogDao {
     @Query("SELECT * FROM calllog WHERE number = :number AND settled = 0 LIMIT 1")
     fun getRecentUnsettledLog(number: String): Flow<CallLog>
 
-    @Query("SELECT * FROM calllog WHERE number = :number AND settled = 1")
+    @Query("SELECT * FROM calllog WHERE number = :number AND settled = 1 ORDER BY timestamp DESC")
     fun getCallHistory(number: String): Flow<List<CallLog>>
 
     @Query("UPDATE calllog SET active = 0, duration = :duration WHERE number = :number")

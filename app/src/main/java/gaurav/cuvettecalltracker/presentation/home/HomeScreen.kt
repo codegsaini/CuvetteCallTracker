@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
@@ -69,7 +70,10 @@ fun HomeScreen(
 
     val devicePolicyManager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
     val adminReceiver = ComponentName(context, AdminReceiver::class.java)
-    var isDeviceAdmin by remember { mutableStateOf(false) }
+
+    // Initially it is set to be true to avoid permission request popup on app start
+    // It will be rechecked in ON_RESUME observer once other permissions flow settled
+    var isDeviceAdmin by remember { mutableStateOf(true) }
 
     val deviceAdminRequestLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -312,6 +316,18 @@ fun HomeScreen(
                 callLog = it,
                 onClick = onCallLogClick
             )
+        }
+        item {
+            if (recentLogs.isEmpty())
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 100.dp),
+                    text = "Empty logs",
+                    letterSpacing = 0.sp,
+                    textAlign = TextAlign.Center,
+                    color = Color(0xFF707070)
+                )
         }
     }
 }
