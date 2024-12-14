@@ -55,6 +55,7 @@ class CallRecordingService: Service() {
 
     override fun onCreate() {
         super.onCreate()
+        startService()
         val shouldStartRecording = dataStoreRepository.getValue(
             booleanPreferencesKey("last_telephony_recording_state"),
             false
@@ -72,7 +73,7 @@ class CallRecordingService: Service() {
                 notificationManager.notify(
                     1,
                     getRecordingNotification(
-                        123 // update duration
+                        0 // update duration
                     )
                 )
             }
@@ -125,7 +126,6 @@ class CallRecordingService: Service() {
             setOutputFormat(MediaRecorder.OutputFormat.AMR_NB)
             setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
             setOutputFile("$file/CallRecording_${number}_$timestamp.m4a")
-            Log.d("TTTG", "initiateRecording: $file/CallRecording_${number}_$timestamp.m4a")
 
             try { prepare() }
             catch (e: IOException) {

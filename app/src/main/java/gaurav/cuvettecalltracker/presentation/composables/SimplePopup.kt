@@ -65,7 +65,8 @@ fun SimplePopup(
                 Text(
                     text = message,
                     fontSize = 16.sp,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    letterSpacing = 0.sp
                 )
                 Button(
                     onClick = onAction,

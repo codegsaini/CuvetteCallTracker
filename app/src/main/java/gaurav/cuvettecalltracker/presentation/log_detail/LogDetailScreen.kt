@@ -61,7 +61,6 @@ fun LogDetailScreen(
         mediaPlayerHelper?.playAudio(
             File("$audioFilePath/CallRecording_${log.number}_${log.timestamp}.m4a")
         )
-        Log.d("TTTG", "startListening: $audioFilePath/CallRecording_${log.number}_${log.timestamp}.m4a")
         currentPlayingCallLogId = id
     }
 

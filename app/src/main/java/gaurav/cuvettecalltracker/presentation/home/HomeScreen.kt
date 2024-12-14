@@ -10,13 +10,20 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -25,9 +32,13 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.core.app.ActivityCompat.startForegroundService
 import androidx.core.content.ContextCompat
@@ -58,10 +69,7 @@ fun HomeScreen(
 
     val devicePolicyManager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
     val adminReceiver = ComponentName(context, AdminReceiver::class.java)
-
-    // Initially it is set to be true to avoid permission request popup on app start
-    // It will be rechecked in ON_RESUME observer once other permissions flow settled
-    var isDeviceAdmin by remember { mutableStateOf(true) }
+    var isDeviceAdmin by remember { mutableStateOf(false) }
 
     val deviceAdminRequestLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -73,6 +81,9 @@ fun HomeScreen(
     val permanentlyDeniedPermissions = remember { mutableStateListOf<String>() }
     var showPermissionRationalePopup by remember { mutableStateOf(false) }
     var showGoToSettingsPopup by remember { mutableStateOf(false) }
+
+    var isCallRecordingEnabled = viewModel.state.value.isCallRecordingEnabled
+    var activeRequestForCallRecording by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -147,6 +158,13 @@ fun HomeScreen(
         isDeviceAdmin = devicePolicyManager.isAdminActive(adminReceiver)
     }
 
+    fun onDisableCallRecording() {
+        viewModel.onEvent(HomeScreenEvent.OnDisableCallRecording)
+    }
+    fun onEnableCallRecording() {
+        viewModel.onEvent(HomeScreenEvent.OnEnableCallRecording)
+    }
+
     DisposableEffect(lifeCycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
@@ -164,15 +182,36 @@ fun HomeScreen(
         onDispose { lifeCycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(isDeviceAdmin) {
-        Intent(context.applicationContext, CallRecordingService::class.java)
-            .apply { action = "START" }
-            .also {
-                startForegroundService(context.applicationContext, it)
-            }
+    LaunchedEffect(isDeviceAdmin, isCallRecordingEnabled) {
+        if (isDeviceAdmin && isCallRecordingEnabled)
+            Intent(context.applicationContext, CallRecordingService::class.java)
+                .apply { action = "START" }
+                .also {
+                    startForegroundService(context.applicationContext, it)
+                }
+        else
+            Intent(context.applicationContext, CallRecordingService::class.java)
+                .apply { action = "STOP" }
+                .also {
+                    startForegroundService(context.applicationContext, it)
+                }
     }
 
-    if (!isDeviceAdmin) {
+    if (activeRequestForCallRecording) {
+        SimplePopup(
+            label = "Consent Required",
+            message = "Your calls will be recorded and stored securely." +
+                    "Are you sure you want to enable call recording",
+            buttonLabel = "Enable Call Recording",
+            onAction = {
+                onEnableCallRecording()
+                activeRequestForCallRecording = false
+            },
+            onDismissRequest = {}
+        )
+    }
+
+    if (!isDeviceAdmin && isCallRecordingEnabled) {
         SimplePopup(
             label = "Message",
             message = "This app need DEVICE ADMIN PERMISSION to record phone call.",
@@ -215,6 +254,39 @@ fun HomeScreen(
         ),
         verticalArrangement = Arrangement.spacedBy(7.dp)
     ) {
+        item {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(5.dp)
+                    .background(Color.Black, RoundedCornerShape(10.dp))
+                    .padding(vertical = 10.dp, horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Call recording",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Switch(
+                    checked = isCallRecordingEnabled,
+                    onCheckedChange = {
+                        if (it) activeRequestForCallRecording = true
+                        else onDisableCallRecording()
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Color(0xFF40A451),
+                        uncheckedThumbColor = Color(0xFFD54545),
+                        uncheckedTrackColor = Color.White,
+                        checkedTrackColor = Color.White,
+                        uncheckedBorderColor = Color(0xFFD54545),
+                        checkedBorderColor = Color(0xFF40A451)
+                    )
+                )
+            }
+        }
         item {
             AnalyticsRow(
                 modifier = Modifier.padding(horizontal = 5.dp),
