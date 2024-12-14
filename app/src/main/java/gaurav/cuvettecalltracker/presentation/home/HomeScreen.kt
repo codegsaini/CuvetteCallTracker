@@ -1,5 +1,9 @@
 package gaurav.cuvettecalltracker.presentation.home
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,30 +11,110 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import gaurav.cuvettecalltracker.domain.model.CallLog
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import gaurav.cuvettecalltracker.presentation.composables.CallLogCard
 import gaurav.cuvettecalltracker.presentation.composables.Label
 import gaurav.cuvettecalltracker.presentation.home.composables.AnalyticsRow
 import gaurav.cuvettecalltracker.presentation.util.CallType
+import gaurav.cuvettecalltracker.presentation.util.findActivity
+
+var permissionsGrantMap = mutableMapOf(
+    Manifest.permission.READ_PHONE_STATE to false,
+    Manifest.permission.READ_CALL_LOG to false
+)
+
 
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
     onCallLogClick: (String) -> Unit
 ) {
+
+    val context = LocalContext.current
+    val activity = context.findActivity()
+    var permissionOfCurrentRationale by remember { mutableStateOf("") }
+    val singlePermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        permissionsGrantMap[permissionOfCurrentRationale] = granted
+    }
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        permissions.forEach { (permission, granted) ->
+            permissionsGrantMap[permission] = granted
+            if (!granted) {
+                activity?.let {
+                    if (shouldShowRequestPermissionRationale(it, permission))
+                        permissionOfCurrentRationale = permission
+                    else {
+
+                    }
+                }
+            }
+        }
+    }
+
     val recentLogs = viewModel.state.value.recentLogs
     val totalCallLogs = recentLogs.size
     val totalIncomingCallLogs = recentLogs.filter { it.callType == CallType.INCOMING }.size
     val totalOutgoingCallLogs = recentLogs.filter { it.callType == CallType.OUTGOING }.size
     val totalMissedCallLogs = recentLogs.filter { it.callType == CallType.MISSED }.size
     val totalDuration = recentLogs.sumOf { it.duration }
+
+    val lifeCycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(Unit) {
+        permissionsGrantMap.forEach { (permission, _) ->
+            permissionsGrantMap[permission] = ContextCompat.checkSelfPermission(
+                context,
+                permission
+            ) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    DisposableEffect(lifeCycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_START) {
+                if (permissionsGrantMap.all { (_, granted) -> !granted })
+                    permissionLauncher.launch(permissionsGrantMap.keys.toTypedArray())
+                else
+                    permissionsGrantMap.forEach { (permission, granted) ->
+                        if (!granted)
+                            activity?.let {
+                                if (shouldShowRequestPermissionRationale(it, permission))
+                                    permissionOfCurrentRationale = permission
+                                else {
+
+                                }
+                            }
+                }
+            }
+        }
+        lifeCycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifeCycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    pe
 
     LazyColumn(
         Modifier

@@ -1,11 +1,13 @@
 package gaurav.cuvettecalltracker.presentation.home.composables
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import gaurav.cuvettecalltracker.R
 import gaurav.cuvettecalltracker.presentation.composables.AnalyticsCard
@@ -24,6 +26,7 @@ fun AnalyticsRow(
     totalMissedCalls: Int = 0,
     totalDuration: Int = 0,
 ) {
+    val context = LocalContext.current
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -63,7 +66,9 @@ fun AnalyticsRow(
         AllLogsCardButton(
             modifier = Modifier
                 .weight(1f),
-            onClick = {}
+            onClick = {
+                Toast.makeText(context, "Not yet implemented", Toast.LENGTH_LONG).show()
+            }
         )
     }
 }

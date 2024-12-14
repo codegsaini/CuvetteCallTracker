@@ -16,7 +16,7 @@ class CallScreeningService @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             if (callDetails.callDirection == Call.Details.DIRECTION_INCOMING) {
                 val number = callDetails.handle.schemeSpecificPart
-//                repository.callLog(number, CallType.OUTGOING)
+                //repository.createCallLog(number, CallType.OUTGOING)
             }
             respondToCall(callDetails, CallResponse.Builder().build())
         }
