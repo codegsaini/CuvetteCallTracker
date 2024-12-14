@@ -29,6 +29,7 @@ fun SimplePopup(
     label: String = "Unlabeled",
     message: String = "No Message",
     onAction: () -> Unit,
+    buttonLabel: String = "OK",
     onDismissRequest: () -> Unit
 ) {
     Popup(
@@ -74,7 +75,7 @@ fun SimplePopup(
                     ),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Allow from Setting")
+                    Text(buttonLabel)
                 }
             }
         }

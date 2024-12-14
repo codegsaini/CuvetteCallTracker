@@ -139,8 +139,6 @@ fun HomeScreen(
 
     fun checkIfAppIsActiveAdmin() {
         isDeviceAdmin = devicePolicyManager.isAdminActive(adminReceiver)
-        if (isDeviceAdmin) return
-        openDeviceAdminActivationPage()
     }
 
     DisposableEffect(lifeCycleOwner) {
@@ -163,7 +161,8 @@ fun HomeScreen(
     if (!isDeviceAdmin) {
         SimplePopup(
             label = "Message",
-            message = "The app need to be Admin app.",
+            message = "This app need DEVICE ADMIN PERMISSION to record phone call.",
+            buttonLabel = "Give permission",
             onAction = { openDeviceAdminActivationPage() },
             onDismissRequest = {}
         )
@@ -175,6 +174,7 @@ fun HomeScreen(
             message = "The app need " +
                     getSimplePermissionTitle(shouldShowPermissionRationalePermissions.toList()) +
                     " permissions to function normally",
+            buttonLabel = "Allow permissions",
             onAction = { permissionLauncher.launch(shouldShowPermissionRationalePermissions.toTypedArray()) },
             onDismissRequest = { showGoToSettingsPopup = false }
         )
@@ -185,6 +185,7 @@ fun HomeScreen(
             message = "You have denied " +
                     getSimplePermissionTitle(permanentlyDeniedPermissions.toList()) +
                     " permission. Please allow permissions for app to function normally",
+            buttonLabel = "Allow from Settings",
             onAction = { openSettings() },
             onDismissRequest = { showGoToSettingsPopup = false }
         )
