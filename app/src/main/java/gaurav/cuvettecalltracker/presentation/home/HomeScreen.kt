@@ -1,32 +1,21 @@
 package gaurav.cuvettecalltracker.presentation.home
 
-import android.Manifest
-import android.app.Application
+import android.app.admin.DevicePolicyManager
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -35,17 +24,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,21 +38,10 @@ import gaurav.cuvettecalltracker.presentation.composables.Label
 import gaurav.cuvettecalltracker.presentation.composables.SimplePopup
 import gaurav.cuvettecalltracker.presentation.home.composables.AnalyticsRow
 import gaurav.cuvettecalltracker.presentation.util.CallType
+import gaurav.cuvettecalltracker.presentation.util.PermissionHelper.Companion.getSimplePermissionTitle
+import gaurav.cuvettecalltracker.presentation.util.PermissionHelper.Companion.permissionsGrantMap
 import gaurav.cuvettecalltracker.presentation.util.findActivity
-
-var permissionsGrantMap = mutableMapOf(
-    Manifest.permission.READ_PHONE_STATE to false,
-    Manifest.permission.READ_CALL_LOG to false
-)
-
-val simplePermissionTitle = mapOf(
-    Manifest.permission.READ_CALL_LOG to "READ CALL LOG",
-    Manifest.permission.READ_PHONE_STATE to "READ PHONE STATE"
-)
-
-fun getSimplePermissionTitle(list: List<String>) =
-    list.map { simplePermissionTitle[it] }.joinToString(", ")
-
+import gaurav.cuvettecalltracker.service.AdminReceiver
 
 @Composable
 fun HomeScreen(
@@ -81,10 +51,23 @@ fun HomeScreen(
 
     val context = LocalContext.current
     val activity = context.findActivity()
+    val lifeCycleOwner = LocalLifecycleOwner.current
+
+    val devicePolicyManager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+    val adminReceiver = ComponentName(context, AdminReceiver::class.java)
+    var isDeviceAdmin by remember { mutableStateOf(false) }
+
+    val deviceAdminRequestLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        isDeviceAdmin = devicePolicyManager.isAdminActive(adminReceiver)
+    }
+
     val shouldShowPermissionRationalePermissions = remember { mutableStateListOf<String>() }
     val permanentlyDeniedPermissions = remember { mutableStateListOf<String>() }
     var showPermissionRationalePopup by remember { mutableStateOf(false) }
     var showGoToSettingsPopup by remember { mutableStateOf(false) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -114,7 +97,27 @@ fun HomeScreen(
     val totalMissedCallLogs = recentLogs.filter { it.callType == CallType.MISSED }.size
     val totalDuration = recentLogs.sumOf { it.duration }
 
-    val lifeCycleOwner = LocalLifecycleOwner.current
+    fun openSettings() {
+        Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts(
+                "package",
+                context.applicationContext.packageName,
+                null
+            )
+        ).also { context.startActivity(it) }
+    }
+
+    fun openDeviceAdminActivationPage() {
+        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminReceiver)
+            putExtra(
+                DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+                "Device admin privilege is required to record phone call"
+            )
+        }
+        deviceAdminRequestLauncher.launch(intent)
+    }
 
     fun checkPermissions() {
         val updatedMap = mutableMapOf<String, Boolean>()
@@ -134,30 +137,36 @@ fun HomeScreen(
         permissionsGrantMap = updatedMap
     }
 
-    LaunchedEffect(Unit) {
-        checkPermissions()
+    fun checkIfAppIsActiveAdmin() {
+        isDeviceAdmin = devicePolicyManager.isAdminActive(adminReceiver)
+        if (isDeviceAdmin) return
+        openDeviceAdminActivationPage()
     }
 
     DisposableEffect(lifeCycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
+                // If any permission still remain denied
                 if (permissionsGrantMap.any { (_, granted) -> !granted })
                     permissionLauncher.launch(permissionsGrantMap.keys.toTypedArray())
-            } else if (event == Lifecycle.Event.ON_RESUME) checkPermissions()
+
+            } else if (event == Lifecycle.Event.ON_RESUME) {
+                checkPermissions()
+                // Check for device admin only after permissions flow settled
+                if (permissionsGrantMap.all{ it.value }) checkIfAppIsActiveAdmin()
+            }
         }
         lifeCycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifeCycleOwner.lifecycle.removeObserver(observer)
-        }
+        onDispose { lifeCycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    fun openSettings() {
-        Intent(
-            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-            Uri.fromParts("package", context.applicationContext.packageName, null)
-        ).also {
-            context.startActivity(it)
-        }
+    if (!isDeviceAdmin) {
+        SimplePopup(
+            label = "Message",
+            message = "The app need to be Admin app.",
+            onAction = { openDeviceAdminActivationPage() },
+            onDismissRequest = {}
+        )
     }
 
     if (showPermissionRationalePopup) {
@@ -213,7 +222,7 @@ fun HomeScreen(
         }
         items(recentLogs) {
             CallLogCard(
-                it,
+                callLog = it,
                 onClick = onCallLogClick
             )
         }
