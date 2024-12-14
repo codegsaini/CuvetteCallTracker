@@ -1,19 +1,24 @@
 package gaurav.cuvettecalltracker.data
 
+import android.content.Context
+import android.content.Intent
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import dagger.hilt.android.qualifiers.ApplicationContext
 import gaurav.cuvettecalltracker.domain.model.CallLog
 import gaurav.cuvettecalltracker.presentation.util.CallType
 import gaurav.cuvettecalltracker.room.dao.CallLogDao
+import gaurav.cuvettecalltracker.service.CallRecordingService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import javax.inject.Inject
 
 class CallLogRepository @Inject constructor(
+    private val context: Context,
     private val dataStoreRepository: DataStoreRepository,
     private val callLogDao: CallLogDao
 ) {
@@ -24,8 +29,6 @@ class CallLogRepository @Inject constructor(
         if (lastState == state) return
 
         val prevState = getLastTelephonyState()
-
-        Log.d("TTTG", "$prevState -> $state")
         val recording = getRecordingState()
 
         val (currentCallType, isCallActiveCurrently, callSettled) = when (prevState) {
@@ -136,7 +139,7 @@ class CallLogRepository @Inject constructor(
     private suspend fun getLastNumber() : String =
         dataStoreRepository.getValue(
             key = stringPreferencesKey("last_telephony_number"),
-            defaultValue = TelephonyManager.EXTRA_STATE_IDLE
+            defaultValue = "0"
         ).first()
 
     private suspend fun setLastNumber(number: String) {
@@ -158,14 +161,6 @@ class CallLogRepository @Inject constructor(
         )
     }
 
-    private suspend fun startRecording() {
-        setRecordingState(true)
-    }
-
-    private suspend fun stopRecording() {
-        setRecordingState(false)
-    }
-
     fun getTotalCalls() : Flow<Int> = callLogDao.getTotalLogs()
     fun getTotalIncomingCalls() : Flow<Int> = callLogDao.getTotalIncomingCallLogs()
     fun getTotalOutgoingCalls() : Flow<Int> = callLogDao.getTotalOutgoingCallLogs()
@@ -173,4 +168,12 @@ class CallLogRepository @Inject constructor(
 
     fun getCallHistory(number: String) : Flow<List<CallLog>> =
         callLogDao.getCallHistory(number)
+
+    private suspend fun startRecording() {
+        setRecordingState(true)
+    }
+
+    private suspend fun stopRecording() {
+        setRecordingState(false)
+    }
 }

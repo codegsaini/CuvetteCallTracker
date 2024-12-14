@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
+import androidx.core.app.ActivityCompat.startForegroundService
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -42,6 +44,7 @@ import gaurav.cuvettecalltracker.presentation.util.PermissionHelper.Companion.ge
 import gaurav.cuvettecalltracker.presentation.util.PermissionHelper.Companion.permissionsGrantMap
 import gaurav.cuvettecalltracker.presentation.util.findActivity
 import gaurav.cuvettecalltracker.service.AdminReceiver
+import gaurav.cuvettecalltracker.service.CallRecordingService
 
 @Composable
 fun HomeScreen(
@@ -55,7 +58,10 @@ fun HomeScreen(
 
     val devicePolicyManager = context.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
     val adminReceiver = ComponentName(context, AdminReceiver::class.java)
-    var isDeviceAdmin by remember { mutableStateOf(false) }
+
+    // Initially it is set to be true to avoid permission request popup on app start
+    // It will be rechecked in ON_RESUME observer once other permissions flow settled
+    var isDeviceAdmin by remember { mutableStateOf(true) }
 
     val deviceAdminRequestLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -156,6 +162,14 @@ fun HomeScreen(
         }
         lifeCycleOwner.lifecycle.addObserver(observer)
         onDispose { lifeCycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(isDeviceAdmin) {
+        Intent(context.applicationContext, CallRecordingService::class.java)
+            .apply { action = "START" }
+            .also {
+                startForegroundService(context.applicationContext, it)
+            }
     }
 
     if (!isDeviceAdmin) {

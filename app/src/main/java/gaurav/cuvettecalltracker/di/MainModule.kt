@@ -59,8 +59,12 @@ object MainModule {
 
     @Provides
     @Singleton
-    fun providesCallLogRepository(dataStoreRepository: DataStoreRepository, callLogDao: CallLogDao) : CallLogRepository {
-        return CallLogRepository(dataStoreRepository, callLogDao)
+    fun providesCallLogRepository(
+        @ApplicationContext context: Context,
+        dataStoreRepository: DataStoreRepository,
+        callLogDao: CallLogDao) : CallLogRepository
+    {
+        return CallLogRepository(context, dataStoreRepository, callLogDao)
     }
 
     @Provides
