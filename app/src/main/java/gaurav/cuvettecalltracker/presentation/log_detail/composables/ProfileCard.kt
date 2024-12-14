@@ -26,10 +26,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import gaurav.cuvettecalltracker.R
 import gaurav.cuvettecalltracker.presentation.composables.Chip
+import gaurav.cuvettecalltracker.presentation.util.TimestampHelper
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ProfileCard() {
+fun ProfileCard(
+    number: String,
+    totalCalls: Int,
+    totalIncomingCalls: Int,
+    totalOutgoingCalls: Int,
+    totalMissedCalls: Int,
+    totalDuration: Int,
+    totalIncomingDuration: Int,
+    totalOutgoingDuration: Int,
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth(),
@@ -55,14 +65,14 @@ fun ProfileCard() {
         )
         Spacer(Modifier.height(20.dp))
         Text(
-            text = "Gaurav Saini",
+            text = "Gaurav Saini",// In future it can be retrieved from contact list
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.sp
         )
         Spacer(Modifier.height(5.dp))
         Text(
-            text = "+919460110818",
+            text = number,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.sp
@@ -72,11 +82,15 @@ fun ProfileCard() {
             horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Chip("24 Incomings, 45 mins 4 secs")
-            Chip("24 Outgoings, 45 mins 4 secs")
-            Chip("24 Missed calls")
-            Chip("Total calls: 153")
-            Chip("Total duration: 4 hours 45 mins 3 secs")
+            Chip("$totalIncomingCalls Incoming, " +
+                    TimestampHelper.getSimpleDurationFormat(totalIncomingDuration)
+            )
+            Chip("$totalOutgoingCalls Outgoing, " +
+                    TimestampHelper.getSimpleDurationFormat(totalOutgoingDuration)
+            )
+            Chip("$totalMissedCalls Missed calls")
+            Chip("Total calls: $totalCalls")
+            Chip("Total duration: ${TimestampHelper.getSimpleDurationFormat(totalDuration)}")
         }
     }
 }

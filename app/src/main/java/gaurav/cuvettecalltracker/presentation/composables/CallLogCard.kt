@@ -29,6 +29,7 @@ import gaurav.cuvettecalltracker.domain.model.CallLog
 import gaurav.cuvettecalltracker.presentation.util.CallLogResourceHelper.Companion.getCallTypeIconResource
 import gaurav.cuvettecalltracker.presentation.util.CallLogResourceHelper.Companion.getCallTypeIconTint
 import gaurav.cuvettecalltracker.presentation.util.CallLogResourceHelper.Companion.getCallTypeLabel
+import gaurav.cuvettecalltracker.presentation.util.CallType
 import gaurav.cuvettecalltracker.presentation.util.TimestampHelper.Companion.getSimpleDurationFormat
 import gaurav.cuvettecalltracker.presentation.util.TimestampHelper.Companion.getSimpleTimeFormat
 
@@ -36,14 +37,14 @@ import gaurav.cuvettecalltracker.presentation.util.TimestampHelper.Companion.get
 fun CallLogCard(
     callLog: CallLog,
     modifier: Modifier = Modifier,
-    onClick: (Int) -> Unit
+    onClick: (String) -> Unit
 ) {
     val callTypeIconResource = getCallTypeIconResource(callLog.callType)
     val callTypeIconTint = getCallTypeIconTint(callLog.callType)
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .clickable { onClick(callLog.id) }
+            .clickable { onClick(callLog.number) }
             .padding(horizontal = 5.dp)
             .padding(top = 5.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -66,9 +67,11 @@ fun CallLogCard(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.sp
             )
+            val label = if (callLog.callType == CallType.MISSED) getCallTypeLabel(callLog.callType)
+            else getCallTypeLabel(callLog.callType)+ ", " +
+                    getSimpleDurationFormat(callLog.duration)
             Text(
-                text = getCallTypeLabel(callLog.callType)+ " call, " +
-                        getSimpleDurationFormat(callLog.duration),
+                text = label,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 letterSpacing = 0.sp,

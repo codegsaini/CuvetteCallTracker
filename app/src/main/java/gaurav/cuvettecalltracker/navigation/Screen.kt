@@ -7,5 +7,5 @@ sealed interface Screen {
     data object Home: Screen
 
     @Serializable
-    data class LogDetail(val id: String): Screen
+    data class LogDetail(val number: String): Screen
 }

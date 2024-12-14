@@ -170,4 +170,7 @@ class CallLogRepository @Inject constructor(
     fun getTotalIncomingCalls() : Flow<Int> = callLogDao.getTotalIncomingCallLogs()
     fun getTotalOutgoingCalls() : Flow<Int> = callLogDao.getTotalOutgoingCallLogs()
     fun getTotalMissedCalls() : Flow<Int> = callLogDao.getTotalMissedCallLogs()
+
+    fun getCallHistory(number: String) : Flow<List<CallLog>> =
+        callLogDao.getCallHistory(number)
 }

@@ -22,7 +22,8 @@ import gaurav.cuvettecalltracker.presentation.util.CallType
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeScreenViewModel = hiltViewModel()
+    viewModel: HomeScreenViewModel = hiltViewModel(),
+    onCallLogClick: (String) -> Unit
 ) {
     val recentLogs = viewModel.state.value.recentLogs
     val totalCallLogs = recentLogs.size
@@ -64,7 +65,7 @@ fun HomeScreen(
         items(recentLogs) {
             CallLogCard(
                 it,
-                onClick = {}
+                onClick = onCallLogClick
             )
         }
     }

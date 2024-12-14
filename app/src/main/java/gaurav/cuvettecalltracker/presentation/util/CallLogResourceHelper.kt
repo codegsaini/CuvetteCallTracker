@@ -25,9 +25,9 @@ class CallLogResourceHelper {
             CallType.MISSED to Color(0xFFD54545),
         )
         private val callTypeLabel = mapOf(
-            CallType.INCOMING to "Incoming",
-            CallType.OUTGOING to "Outgoing",
-            CallType.MISSED to "Missed"
+            CallType.INCOMING to "Incoming call",
+            CallType.OUTGOING to "Outgoing call",
+            CallType.MISSED to "Missed call"
         )
     }
 }

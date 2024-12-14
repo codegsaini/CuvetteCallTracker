@@ -67,9 +67,11 @@ fun LogDetailCard(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.sp
             )
+            val label = if (callLog.callType == CallType.MISSED) getCallTypeLabel(callLog.callType)
+            else getCallTypeLabel(callLog.callType)+ ", " +
+                    getSimpleDurationFormat(callLog.duration)
             Text(
-                text = getCallTypeLabel(callLog.callType)+ ", " +
-                        getSimpleDurationFormat(callLog.duration),
+                text = label,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 letterSpacing = 0.sp,
