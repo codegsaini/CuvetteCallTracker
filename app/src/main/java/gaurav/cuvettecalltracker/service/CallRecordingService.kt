@@ -79,7 +79,6 @@ class CallRecordingService: Service() {
             else {
                 mediaRecorder?.stop()
                 mediaRecorder?.reset()
-                mediaRecorder?.release()
                 mediaRecorder = null
                 notificationManager.notify(
                     1,
@@ -103,7 +102,7 @@ class CallRecordingService: Service() {
         }
         val timestamp = runBlocking {
             dataStoreRepository.getValue(
-                longPreferencesKey("last_telephony_state_change_timestamp"),
+                longPreferencesKey("last_call_log_timestamp"),
                 -1L
             ).first()
         }
@@ -117,23 +116,26 @@ class CallRecordingService: Service() {
 //                ?: return
         val file = getExternalFilesDir("Recordings")?.absolutePath ?: return
 
-        mediaRecorder =
+        val recorder =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(applicationContext)
             else MediaRecorder()
 
-        mediaRecorder?.setAudioSource(MediaRecorder.AudioSource.MIC)
-        mediaRecorder?.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-        mediaRecorder?.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-        mediaRecorder?.setOutputFile("$file/${number}_$timestamp.m4a")
+        recorder.apply {
+            setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+            setOutputFormat(MediaRecorder.OutputFormat.AMR_NB)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            setOutputFile("$file/CallRecording_${number}_$timestamp.m4a")
+            Log.d("TTTG", "initiateRecording: $file/CallRecording_${number}_$timestamp.m4a")
 
-        try {
-            mediaRecorder?.prepare()
-        } catch (e: IOException) {
-            Log.e("CallRecordingService", "initiateRecording: ${e.message}")
-        } catch (e: IllegalStateException) {
-            Log.e("CallRecordingService", "initiateRecording: ${e.message}")
+            try { prepare() }
+            catch (e: IOException) {
+                Log.e("CallRecordingService", "initiateRecording: ${e.message}")
+            } catch (e: IllegalStateException) {
+                Log.e("CallRecordingService", "initiateRecording: ${e.message}")
+            }
+            start()
+            mediaRecorder = this
         }
-        mediaRecorder?.start()
     }
 
     private fun startService() {

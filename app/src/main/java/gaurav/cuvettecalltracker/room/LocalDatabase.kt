@@ -6,7 +6,7 @@ import gaurav.cuvettecalltracker.domain.model.CallLog
 import gaurav.cuvettecalltracker.domain.model.Contact
 import gaurav.cuvettecalltracker.room.dao.CallLogDao
 
-@Database(entities = [CallLog::class, Contact::class], version = 7)
+@Database(entities = [CallLog::class, Contact::class], version = 8)
 abstract class LocalDatabase: RoomDatabase() {
     abstract fun callLogDao(): CallLogDao
 }

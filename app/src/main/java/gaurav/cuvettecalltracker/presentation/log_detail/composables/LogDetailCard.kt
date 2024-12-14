@@ -38,15 +38,21 @@ import gaurav.cuvettecalltracker.presentation.util.TimestampHelper.Companion.get
 fun LogDetailCard(
     callLog: CallLog,
     modifier: Modifier = Modifier,
-    onListenClick: (Int) -> Unit
+    playingRecording: Boolean = false,
+    onListen: (Int) -> Unit,
+    onStopListening: () -> Unit
 ) {
     val callTypeIconResource = getCallTypeIconResource(callLog.callType)
     val callTypeIconTint = getCallTypeIconTint(callLog.callType)
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .padding(horizontal = 5.dp)
-            .padding(top = 5.dp),
+            .background(
+                color = if (playingRecording) Color(0xFF42C759) else Color.Transparent,
+                shape = RoundedCornerShape(10.dp)
+            )
+            .padding(top = 10.dp)
+            .padding(horizontal = 10.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Icon(
@@ -65,7 +71,8 @@ fun LogDetailCard(
                 text = getSimpleTimeFormat(callLog.timestamp),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 0.sp
+                letterSpacing = 0.sp,
+                color = if (playingRecording) Color.White else Color.Black
             )
             val label = if (callLog.callType == CallType.MISSED) getCallTypeLabel(callLog.callType)
             else getCallTypeLabel(callLog.callType)+ ", " +
@@ -75,7 +82,7 @@ fun LogDetailCard(
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 letterSpacing = 0.sp,
-                color = Color(0xFF565656)
+                color = if (playingRecording) Color.White else Color(0xFF565656)
             )
             Spacer(Modifier.height(13.dp))
             HorizontalDivider(
@@ -93,10 +100,16 @@ fun LogDetailCard(
         ) {
             IconButton(
                 modifier = Modifier.size(34.dp),
-                onClick = { onListenClick(callLog.id) }
+                onClick = {
+                    if (playingRecording) onStopListening()
+                    else onListen(callLog.id)
+                }
             ) {
                 Icon(
-                    painter = painterResource(R.drawable.baseline_audiotrack_24),
+                    painter = painterResource(
+                        if (playingRecording) R.drawable.baseline_stop_24
+                        else R.drawable.baseline_play_arrow_24
+                    ),
                     contentDescription = null,
                     modifier = Modifier
                         .background(

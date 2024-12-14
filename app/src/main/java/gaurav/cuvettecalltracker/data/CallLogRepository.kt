@@ -28,16 +28,15 @@ class CallLogRepository @Inject constructor(
         // Ignore second consecutive same broadcast
         if (lastState == state) return
 
-        val prevState = getLastTelephonyState()
         val recording = getRecordingState()
-
-        val (currentCallType, isCallActiveCurrently, callSettled) = when (prevState) {
+        val currentTimestamp = System.currentTimeMillis()
+        val (currentCallType, isCallActiveCurrently, callSettled) = when (lastState) {
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 when (state) {
                     TelephonyManager.EXTRA_STATE_RINGING -> Triple(CallType.INCOMING, false, false)
                     TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                         if (!recording) {
-                            startRecording()
+                            startRecording(currentTimestamp)
                         }
                         Triple(CallType.OUTGOING, true, false)
                     }
@@ -49,7 +48,7 @@ class CallLogRepository @Inject constructor(
                     TelephonyManager.EXTRA_STATE_IDLE -> Triple(CallType.MISSED, false, true)
                     TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                         if (!recording) {
-                            startRecording()
+                            startRecording(currentTimestamp)
                         }
                         Triple(CallType.INCOMING, true, false)
                     }
@@ -73,7 +72,6 @@ class CallLogRepository @Inject constructor(
         if (currentCallType == null) return
 
         val recentUnsettledCallLog = callLogDao.getRecentUnsettledLog(number).firstOrNull()
-        val currentTimestamp = System.currentTimeMillis()
 
         if (recentUnsettledCallLog == null) {
             val callLog = CallLog(
@@ -161,6 +159,19 @@ class CallLogRepository @Inject constructor(
         )
     }
 
+    private suspend fun getCallLogTimestamp() : Long =
+        dataStoreRepository.getValue(
+            key = longPreferencesKey("last_call_log_timestamp"),
+            defaultValue = -1L
+        ).first()
+
+    private suspend fun setCallLogTimestamp(currentTimestamp: Long) {
+        dataStoreRepository.setValue(
+            key = longPreferencesKey("last_call_log_timestamp"),
+            value = currentTimestamp
+        )
+    }
+
     fun getTotalCalls() : Flow<Int> = callLogDao.getTotalLogs()
     fun getTotalIncomingCalls() : Flow<Int> = callLogDao.getTotalIncomingCallLogs()
     fun getTotalOutgoingCalls() : Flow<Int> = callLogDao.getTotalOutgoingCallLogs()
@@ -169,7 +180,8 @@ class CallLogRepository @Inject constructor(
     fun getCallHistory(number: String) : Flow<List<CallLog>> =
         callLogDao.getCallHistory(number)
 
-    private suspend fun startRecording() {
+    private suspend fun startRecording(timestamp: Long) {
+        setCallLogTimestamp(timestamp)
         setRecordingState(true)
     }
 
