@@ -39,20 +39,23 @@ Recording a phone call is very much connected to the privacy concern of the user
 Solution to this problem is [`ForegroundService`](https://developer.android.com/develop/background-work/services/fgs)
 
 But the problem is still not solved, which I will cover in _Known Issues_ section.
-### ◉ Known Bugs
-Although the app is designed to record call but from
 
-### User Interface
+### ◉ Known Issues
+1. As I mentioned in _Call Log_ section that we can detect phone number in `BroadcastReceiver` using `Intent.EXTRA_INCOMING_NUMBER`, but [since Android 10 (Api 29) this is deprecated](https://developer.android.com/reference/android/telephony/TelephonyManager#EXTRA_INCOMING_NUMBER) and for further android versions [`CallScreeningService`](https://developer.android.com/reference/android/telecom/CallScreeningService) is to be used. For this assignment I have not implemented `CallScreeningService` due to time constraint.
+   
+2. Although the app is designed to record call but as per [this article in android documentation](https://developer.android.com/media/platform/sharing-audio-input#voice_call_ordinary_app) third-party apps can no longer record calls ([with an exception I guess](https://developer.android.com/media/platform/sharing-audio-input#voice_call_ordinary_app:~:text=The%20app%20can%20capture%20audio%20if%20it%20is%20an%20accessibility%20service.)). Therefore, for now the recorded call will not have any voice but just silence.
+
+### ◉ User Interface
 
  - Home page with list of call logs and all data stats
-<img src="https://github.com/user-attachments/assets/a0e55a3c-ce0c-4abf-807e-49cd3712db23" width="300" />
+<img src="https://github.com/user-attachments/assets/4c88fb2f-a777-49e0-ba81-1394e2bfe141" width="300" />
 
 ---
 
 - When the user click on `Enable Recording` button, a consent popup will be shown
-<img src="https://github.com/user-attachments/assets/4cf27a97-9112-417d-873c-f309a47ff4a1" width="300" />
+<img src="https://github.com/user-attachments/assets/49b646bf-28d9-4447-9f55-01ec928ecda3" width="300" />
 
 ---
 
 - This is the detail page of particular number, here voice recording play/pause button is also available
-<img src="https://github.com/user-attachments/assets/57e823f9-81bc-4bd3-aca0-45aba1e39377" width="300" />
+<img src="https://github.com/user-attachments/assets/4d8cc240-d6e5-4d8f-ab2d-c8daf8b0e412" width="300" />
