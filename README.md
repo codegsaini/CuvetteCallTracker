@@ -1,6 +1,17 @@
-# CuvetteCallTracker
+# <p align="center">Cuvette Call Tracker</p>
+### <p align="center">Documentation</p>
+---
+### ◉ Introduction
+- Track call logs and show different statistics i.e. total calls, number of missed calls, number of incoming calls, etc.
+- Record phone calls automatically when enabled from settings with proper consent from the user.
 
-### Objectives achieved
+### ◉ Technical Brief
+- Language: Kotlin
+- UI: Jetpack Compose.
+- Follows MVVM design pattern
+
+### ◉ Objectives achieved 
+(_As mentioned in the assignment manual_)
 
 - [x] Total calls
 - [x] Number of incoming calls
