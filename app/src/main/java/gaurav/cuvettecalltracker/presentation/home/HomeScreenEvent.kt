@@ -1,6 +1,6 @@
 package gaurav.cuvettecalltracker.presentation.home
 
 sealed interface HomeScreenEvent {
-    data object OnEnableCallRecording: HomeScreenEvent
-    data object OnDisableCallRecording: HomeScreenEvent
+    data class OnEnableCallRecording(val callback: (String) -> Unit): HomeScreenEvent
+    data class OnDisableCallRecording(val callback: (String) -> Unit): HomeScreenEvent
 }

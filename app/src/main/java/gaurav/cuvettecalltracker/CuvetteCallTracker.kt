@@ -13,8 +13,12 @@ class CuvetteCallTracker : Application() {
         val notificationChannel = NotificationChannel(
             "call_recording_service_notification_channel",
             "Call Recording Service Channel",
-            NotificationManager.IMPORTANCE_HIGH
-        )
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            setShowBadge(false)
+            enableVibration(false)
+        }
+
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(notificationChannel)
     }

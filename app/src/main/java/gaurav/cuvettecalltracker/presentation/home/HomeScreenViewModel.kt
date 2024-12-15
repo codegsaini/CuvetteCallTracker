@@ -3,7 +3,6 @@ package gaurav.cuvettecalltracker.presentation.home
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,18 +23,21 @@ class HomeScreenViewModel @Inject constructor(
     var state: State<HomeScreenState> = _state
 
     init {
-        getRecentLogs()
-        getCallRecordingEnabled()
+        observeRecentLogs()
+        observeCallRecordingEnabledStatus()
+        observeCallRecordingActiveStatus()
     }
 
     fun onEvent(event: HomeScreenEvent) {
         when(event) {
-            HomeScreenEvent.OnDisableCallRecording -> setCallRecordingState(false)
-            HomeScreenEvent.OnEnableCallRecording -> setCallRecordingState(true)
+            is HomeScreenEvent.OnDisableCallRecording ->
+                setCallRecordingStatePreference(false, event.callback)
+            is HomeScreenEvent.OnEnableCallRecording ->
+                setCallRecordingStatePreference(true, event.callback)
         }
     }
 
-    private fun getRecentLogs() {
+    private fun observeRecentLogs() {
         repository.getRecentLogs().onEach {
             _state.value = state.value.copy(
                 recentLogs = it
@@ -45,22 +47,39 @@ class HomeScreenViewModel @Inject constructor(
     }
 
 
-    private fun getCallRecordingEnabled() {
+    private fun observeCallRecordingEnabledStatus() {
         dataStoreRepository.getValue(
             booleanPreferencesKey("call_recording_enabled"),
             false
         ).onEach {
-            _state.value = state.value.copy(
-                isCallRecordingEnabled = it
-            )
+            setIsCallRecordingEnabledState(it)
         }
             .launchIn(viewModelScope)
     }
 
-    private fun setCallRecordingState(state: Boolean) {
+    private fun setIsCallRecordingEnabledState(value: Boolean) {
+        _state.value = state.value.copy(
+            isCallRecordingEnabled = value,
+            loadedCallRecordingStatusFromPreferences = true
+        )
+    }
+
+    private fun setCallRecordingStatePreference(value: Boolean, onError: (String) -> Unit) {
+        if (state.value.isCallRecordingActive) return onError("Can't change when call is active")
         viewModelScope.launch {
-            dataStoreRepository.setValue(booleanPreferencesKey("call_recording_enabled"), state)
+            dataStoreRepository.setValue(booleanPreferencesKey("call_recording_enabled"), value)
         }
+    }
+
+    private fun observeCallRecordingActiveStatus() {
+        dataStoreRepository.getValue(
+            key = booleanPreferencesKey("last_telephony_recording_state"),
+            defaultValue = false
+        ).onEach {
+            _state.value = state.value.copy(
+                isCallRecordingActive = it
+            )
+        }.launchIn(viewModelScope)
     }
 
 }

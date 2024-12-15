@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -86,7 +87,9 @@ fun HomeScreen(
     var showPermissionRationalePopup by remember { mutableStateOf(false) }
     var showGoToSettingsPopup by remember { mutableStateOf(false) }
 
-    var isCallRecordingEnabled = viewModel.state.value.isCallRecordingEnabled
+    val isCallRecordingEnabled = viewModel.state.value.isCallRecordingEnabled
+    val callRecordingStatusLoadedFromPreferences =
+        viewModel.state.value.loadedCallRecordingStatusFromPreferences
     var activeRequestForCallRecording by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -163,10 +166,14 @@ fun HomeScreen(
     }
 
     fun onDisableCallRecording() {
-        viewModel.onEvent(HomeScreenEvent.OnDisableCallRecording)
+        viewModel.onEvent(HomeScreenEvent.OnDisableCallRecording { error ->
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        })
     }
     fun onEnableCallRecording() {
-        viewModel.onEvent(HomeScreenEvent.OnEnableCallRecording)
+        viewModel.onEvent(HomeScreenEvent.OnEnableCallRecording { error ->
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        })
     }
 
     DisposableEffect(lifeCycleOwner) {
@@ -186,7 +193,8 @@ fun HomeScreen(
         onDispose { lifeCycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    LaunchedEffect(isDeviceAdmin, isCallRecordingEnabled) {
+    LaunchedEffect(isDeviceAdmin, isCallRecordingEnabled, callRecordingStatusLoadedFromPreferences) {
+        if (callRecordingStatusLoadedFromPreferences.not()) return@LaunchedEffect
         if (isDeviceAdmin && isCallRecordingEnabled)
             Intent(context.applicationContext, CallRecordingService::class.java)
                 .apply { action = "START" }

@@ -15,6 +15,7 @@ import gaurav.cuvettecalltracker.service.CallRecordingService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class CallLogRepository @Inject constructor(
@@ -36,7 +37,10 @@ class CallLogRepository @Inject constructor(
                     TelephonyManager.EXTRA_STATE_RINGING -> Triple(CallType.INCOMING, false, false)
                     TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                         if (!recording) {
-                            startRecording(currentTimestamp)
+                            runBlocking {
+                                if (getRecordingEnabledStatus())
+                                    startRecording(currentTimestamp)
+                            }
                         }
                         Triple(CallType.OUTGOING, true, false)
                     }
@@ -48,7 +52,10 @@ class CallLogRepository @Inject constructor(
                     TelephonyManager.EXTRA_STATE_IDLE -> Triple(CallType.MISSED, false, true)
                     TelephonyManager.EXTRA_STATE_OFFHOOK -> {
                         if (!recording) {
-                            startRecording(currentTimestamp)
+                            runBlocking {
+                                if (getRecordingEnabledStatus())
+                                    startRecording(currentTimestamp)
+                            }
                         }
                         Triple(CallType.INCOMING, true, false)
                     }
@@ -158,6 +165,11 @@ class CallLogRepository @Inject constructor(
             value = currentTimestamp
         )
     }
+    private suspend fun getRecordingEnabledStatus() : Boolean =
+        dataStoreRepository.getValue(
+            booleanPreferencesKey("call_recording_enabled"),
+            false
+        ).first()
 
     private suspend fun getCallLogTimestamp() : Long =
         dataStoreRepository.getValue(

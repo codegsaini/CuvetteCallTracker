@@ -1,5 +1,6 @@
 package gaurav.cuvettecalltracker.presentation.composables
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,12 +41,17 @@ fun CallLogCard(
     modifier: Modifier = Modifier,
     onClick: (String) -> Unit
 ) {
+    val context = LocalContext.current
     val callTypeIconResource = getCallTypeIconResource(callLog.callType)
     val callTypeIconTint = getCallTypeIconTint(callLog.callType)
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .clickable { onClick(callLog.number) }
+            .clickable {
+                if (callLog.active)
+                    Toast.makeText(context, "Call is active", Toast.LENGTH_SHORT).show()
+                else onClick(callLog.number)
+            }
             .padding(horizontal = 5.dp)
             .padding(top = 5.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -67,15 +74,17 @@ fun CallLogCard(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.sp
             )
-            val label = if (callLog.callType == CallType.MISSED) getCallTypeLabel(callLog.callType)
+            var label = if (callLog.callType == CallType.MISSED) getCallTypeLabel(callLog.callType)
             else getCallTypeLabel(callLog.callType)+ ", " +
                     getSimpleDurationFormat(callLog.duration)
+
+            label = if (callLog.active) "Active" else label
             Text(
                 text = label,
                 fontSize = 14.sp,
                 lineHeight = 20.sp,
                 letterSpacing = 0.sp,
-                color = Color(0xFF565656)
+                color = if (callLog.active) Color(0xFF42C759) else Color(0xFF565656)
             )
             Text(
                 text = getSimpleTimeFormat(callLog.timestamp),
