@@ -21,6 +21,27 @@
 - [x] Total call duration
 - [x] Phone numbers involved in the calls
 
+### ◉ Call log
+To detect any call-related activity, `BroadcastReceiver` is registered to listen to the changes in phone state with the help of the `READ_PHONE_STATE` intent filter.
+In the `onReceive()` method we can get some extras to help log the call info such as -
+- `EXTRA_PHONE_STATE` which will give `STATE_IDLE`, `STATE_RINGING` and `STATE_IDLE` values
+- `EXTRA_INCOMING_NUMBER` which will give the number of incoming/outgoing call
+Here, one thing to notice is that the `BroadCastReceiver` does not give any information whether the call is incoming or outgoing.
+
+**But the incoming/outgoing conclusion can be derived with the help of below flow chart -**
+
+![CallStatus_FlowChart](https://github.com/user-attachments/assets/aa3b940f-a47c-46ce-97ef-e30f99b42835)
+
+### ◉ Call recording
+Recording a phone call is very much connected to the privacy concern of the user if misused. Hence android has many limitations/restrictions regarding the ability to record calls by third-party apps. One such limitation is that from android 9 (API 28) app can't record any audio input from device while in background as per [android documentation](https://developer.android.com/media/platform/sharing-audio-input#:~:text=One%20more%20change,at%20the%20time.) which states that -
+> One more change was added in Android 9: only apps running in the foreground (or a foreground service) could capture the audio input. When an app without a foreground service or foreground UI component started to capture, the app continued running but received silence, even if it was the only app capturing audio at the time.
+
+Solution to this problem is [`ForegroundService`](https://developer.android.com/develop/background-work/services/fgs)
+
+But the problem is still not solved, which I will cover in _Known Issues_ section.
+### ◉ Known Bugs
+Although the app is designed to record call but from
+
 ### User Interface
 
  - Home page with list of call logs and all data stats
