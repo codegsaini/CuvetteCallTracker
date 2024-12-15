@@ -1,6 +1,6 @@
 package gaurav.cuvettecalltracker.presentation.log_detail
 
-import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,18 +11,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import gaurav.cuvettecalltracker.domain.model.CallLog
 import gaurav.cuvettecalltracker.presentation.composables.Label
@@ -30,7 +24,6 @@ import gaurav.cuvettecalltracker.presentation.log_detail.composables.LogDetailCa
 import gaurav.cuvettecalltracker.presentation.log_detail.composables.ProfileCard
 import gaurav.cuvettecalltracker.presentation.log_detail.composables.TitleRow
 import gaurav.cuvettecalltracker.presentation.util.CallType
-import gaurav.cuvettecalltracker.presentation.util.MediaPlayerHelper
 import java.io.File
 
 @Composable
@@ -41,8 +34,7 @@ fun LogDetailScreen(
 ) {
 
     val context = LocalContext.current
-    var mediaPlayerHelper by remember { mutableStateOf<MediaPlayerHelper?>(null) }
-    var currentPlayingCallLogId by remember { mutableIntStateOf(0) }
+    val currentPlayingCallLogId = viewModel.state.value.currentPlayingLogId
 
     val callLogs = viewModel.state.value.callLogs
     val totalCallLogs = callLogs.size
@@ -55,18 +47,15 @@ fun LogDetailScreen(
 
     val audioFilePath = context.getExternalFilesDir("Recordings")?.absolutePath ?: return
 
-    fun startListening(id: Int) {
-        val log = callLogs.first { it.id == id }
-        mediaPlayerHelper?.stop()
-        mediaPlayerHelper?.playAudio(
-            File("$audioFilePath/CallRecording_${log.number}_${log.timestamp}.m4a")
-        )
-        currentPlayingCallLogId = id
+    fun startListening(callLog: CallLog) {
+        val file = File("$audioFilePath/CallRecording_${callLog.number}_${callLog.timestamp}.m4a")
+        viewModel.onEvent(LogDetailScreenEvent.OnStartPlayingRecording(context, callLog.id, file) { error ->
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        })
     }
 
     fun stopListening() {
-        mediaPlayerHelper?.stop()
-        currentPlayingCallLogId = 0
+        viewModel.onEvent(LogDetailScreenEvent.OnStopPlayingRecording)
     }
 
     val lifeCycleOwner = LocalLifecycleOwner.current
@@ -82,7 +71,6 @@ fun LogDetailScreen(
 
     LaunchedEffect(Unit) {
         stopListening()
-        mediaPlayerHelper = MediaPlayerHelper(context)
     }
 
     LaunchedEffect(number) {

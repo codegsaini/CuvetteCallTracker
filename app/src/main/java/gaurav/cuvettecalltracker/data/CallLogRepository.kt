@@ -29,19 +29,21 @@ class CallLogRepository @Inject constructor(
         // Ignore second consecutive same broadcast
         if (lastState == state) return
 
-        val recording = getRecordingState()
+        setLastTelephonyState(state)
+        setLastNumber(number)
+
         val currentTimestamp = System.currentTimeMillis()
+        setLastStateChangeTimestamp(currentTimestamp)
+
+        val recording = getRecordingState()
+
         val (currentCallType, isCallActiveCurrently, callSettled) = when (lastState) {
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 when (state) {
                     TelephonyManager.EXTRA_STATE_RINGING -> Triple(CallType.INCOMING, false, false)
                     TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                        if (!recording) {
-                            runBlocking {
-                                if (getRecordingEnabledStatus())
-                                    startRecording(currentTimestamp)
-                            }
-                        }
+                        if (!recording)
+                            startRecording(currentTimestamp)
                         Triple(CallType.OUTGOING, true, false)
                     }
                     else -> Triple(null, false, false)
@@ -51,12 +53,8 @@ class CallLogRepository @Inject constructor(
                 when (state) {
                     TelephonyManager.EXTRA_STATE_IDLE -> Triple(CallType.MISSED, false, true)
                     TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                        if (!recording) {
-                            runBlocking {
-                                if (getRecordingEnabledStatus())
-                                    startRecording(currentTimestamp)
-                            }
-                        }
+                        if (!recording)
+                            startRecording(currentTimestamp)
                         Triple(CallType.INCOMING, true, false)
                     }
                     else -> Triple(null, false, false)
@@ -108,9 +106,6 @@ class CallLogRepository @Inject constructor(
             )
             callLogDao.upsertCallLog(updatedCallLog)
         }
-        setLastTelephonyState(state)
-        setLastNumber(number)
-        setLastStateChangeTimestamp(currentTimestamp)
     }
 
     fun getRecentLogs() : Flow<List<CallLog>> {
@@ -193,8 +188,10 @@ class CallLogRepository @Inject constructor(
         callLogDao.getCallHistory(number)
 
     private suspend fun startRecording(timestamp: Long) {
-        setCallLogTimestamp(timestamp)
-        setRecordingState(true)
+        if (getRecordingEnabledStatus()) {
+            setCallLogTimestamp(timestamp)
+            setRecordingState(true)
+        }
     }
 
     private suspend fun stopRecording() {

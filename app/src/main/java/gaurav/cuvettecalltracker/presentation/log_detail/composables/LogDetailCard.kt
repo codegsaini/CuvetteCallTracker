@@ -39,7 +39,7 @@ fun LogDetailCard(
     callLog: CallLog,
     modifier: Modifier = Modifier,
     playingRecording: Boolean = false,
-    onListen: (Int) -> Unit,
+    onListen: (CallLog) -> Unit,
     onStopListening: () -> Unit
 ) {
     val callTypeIconResource = getCallTypeIconResource(callLog.callType)
@@ -102,7 +102,7 @@ fun LogDetailCard(
                 modifier = Modifier.size(34.dp),
                 onClick = {
                     if (playingRecording) onStopListening()
-                    else onListen(callLog.id)
+                    else onListen(callLog)
                 }
             ) {
                 Icon(
