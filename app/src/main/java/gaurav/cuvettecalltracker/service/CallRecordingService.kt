@@ -63,27 +63,6 @@ class CallRecordingService: Service() {
         observeRecordingActiveState(callRecordingScope)
     }
 
-    private fun initiateRecording(fileName: String) {
-        if (mFile == null) return
-        getRecorder().apply {
-            setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
-            setOutputFormat(MediaRecorder.OutputFormat.AMR_NB)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
-            setOutputFile(fileName)
-
-            try { prepare() }
-            catch (e: IOException) {
-                Log.e("CallRecordingService", "initiateRecording: ${e.message}")
-                return@apply
-            } catch (e: IllegalStateException) {
-                Log.e("CallRecordingService", "initiateRecording: ${e.message}")
-                return@apply
-            }
-            start()
-            mMediaRecorder = this
-        }
-    }
-
     private fun startService() {
         val notification = getNotification(
             title = "Cuvette Call Tracker",
@@ -91,31 +70,6 @@ class CallRecordingService: Service() {
             cancelable = false
         )
         startForeground(1, notification)
-    }
-
-    private fun getNotification(title: String, text: String, cancelable: Boolean) : Notification {
-        return NotificationCompat.Builder(
-            this,
-            "call_recording_service_notification_channel"
-        )
-            .setContentTitle(title)
-            .setContentText(text)
-            .setOnlyAlertOnce(true)
-            .setOngoing(!cancelable)
-            .setSmallIcon(R.drawable.baseline_person_24)
-            .build()
-    }
-
-    private fun getRecordingNotification() : Notification {
-        return NotificationCompat.Builder(
-            this,
-            "call_recording_service_notification_channel"
-        )
-            .setContentTitle("Call Recording...")
-            .setUsesChronometer(true)
-            .setOnlyAlertOnce(true)
-            .setSmallIcon(R.drawable.baseline_mic_24)
-            .build()
     }
 
     private fun observerLastTelephonyNumber(scope: CoroutineScope) {
@@ -176,4 +130,50 @@ class CallRecordingService: Service() {
     private fun getRecorder() : MediaRecorder =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(applicationContext)
         else MediaRecorder()
+
+    private fun initiateRecording(fileName: String) {
+        if (mFile == null) return
+        getRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+            setOutputFormat(MediaRecorder.OutputFormat.AMR_NB)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+            setOutputFile(fileName)
+
+            try { prepare() }
+            catch (e: IOException) {
+                Log.e("CallRecordingService", "initiateRecording: ${e.message}")
+                return@apply
+            } catch (e: IllegalStateException) {
+                Log.e("CallRecordingService", "initiateRecording: ${e.message}")
+                return@apply
+            }
+            start()
+            mMediaRecorder = this
+        }
+    }
+
+    private fun getNotification(title: String, text: String, cancelable: Boolean) : Notification {
+        return NotificationCompat.Builder(
+            this,
+            "call_recording_service_notification_channel"
+        )
+            .setContentTitle(title)
+            .setContentText(text)
+            .setOnlyAlertOnce(true)
+            .setOngoing(!cancelable)
+            .setSmallIcon(R.drawable.baseline_person_24)
+            .build()
+    }
+
+    private fun getRecordingNotification() : Notification {
+        return NotificationCompat.Builder(
+            this,
+            "call_recording_service_notification_channel"
+        )
+            .setContentTitle("Call Recording...")
+            .setUsesChronometer(true)
+            .setOnlyAlertOnce(true)
+            .setSmallIcon(R.drawable.baseline_mic_24)
+            .build()
+    }
 }

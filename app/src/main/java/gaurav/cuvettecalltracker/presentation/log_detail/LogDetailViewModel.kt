@@ -50,6 +50,7 @@ class LogDetailViewModel @Inject constructor(
         file: File,
         onError: (String) -> Unit
     ) {
+        stopPlaying()
         MediaPlayer.create(context, file.toUri()).apply {
             player = this
             try {
