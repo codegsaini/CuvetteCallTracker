@@ -57,6 +57,7 @@ class LogDetailViewModel @Inject constructor(
                 _state.value = state.value.copy(
                     currentPlayingLogId = logId
                 )
+                setMediaPlayerListener()
             }
             catch (e: NullPointerException) {
                 onError("Recording not found")
@@ -71,6 +72,12 @@ class LogDetailViewModel @Inject constructor(
         _state.value = state.value.copy(
             currentPlayingLogId = -1
         )
+    }
+
+    private fun setMediaPlayerListener() {
+        player?.setOnCompletionListener {
+            stopPlaying()
+        }
     }
 
 }
